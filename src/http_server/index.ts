@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
 import { WebSocketServer } from 'ws';
+import { connectWs } from "../ws_server/indexWs.js";
 
 
 export const httpServer = http.createServer(function (req, res) {
@@ -19,7 +20,8 @@ export const httpServer = http.createServer(function (req, res) {
 });
 const ws = new WebSocketServer({ port: 3000 });
 
-ws.on('connection', (ws) => {
-        console.log('received: %s');
-      ws.send('something');
-    });
+ws.on('connection', connectWs)
+//  (ws) => {
+//         console.log('received: %s');
+//       ws.send('something');
+//     });
