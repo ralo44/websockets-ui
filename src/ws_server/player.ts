@@ -1,3 +1,4 @@
+import crypto from "crypto";
 export class Player {
     name: string;
     password: string;
