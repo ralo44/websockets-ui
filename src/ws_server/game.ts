@@ -2,8 +2,10 @@ import { Player } from "./player.js";
 import crypto from "crypto";
 
 export class Game {
-  idRoom: string;
+  idGame: string;
+  ships: any
   constructor(player: Player) {
-    this.idRoom = crypto.randomUUID();
+    this.idGame = crypto.randomUUID();
+    this.ships = [];
   }
 }

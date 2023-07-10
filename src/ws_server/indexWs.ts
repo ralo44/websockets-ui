@@ -4,14 +4,15 @@
 // import { WebSocketServer } from 'ws';
 // import { env } from 'process';
 import { Player } from "./player.js";
-// import { Game } from "./game.js";
+import { Game } from "./game.js";
 import { IRequest } from "../type.js";
 
 const connections = new Set();
 
 export const connectWs = (ws: any) => {
     let newPlayer: Player;
-    // let newGame: Game;
+    let players: Player[];
+    let newGame: Game;
 
     ws.onmessage = (message: { data: string }) => {
         const { data } = message;
@@ -24,15 +25,43 @@ export const connectWs = (ws: any) => {
             const dataReg = JSON.parse(data)
             newPlayer = new Player(dataReg.name, dataReg.password)
             connections.add(dataReg);
+            players.push(newPlayer)
             const response = JSON.stringify({
                 type: "reg",
                 data: JSON.stringify(newPlayer.getPlayer()),
                 id: 0,
               });
             ws.send(response);
-        } else {
+        } else if (dataType === "create_room") {
+            // console.log('create room');
+            // const dataCreateRoom = JSON.parse(data)
+            newGame = new Game(newPlayer)
+            // connections.add(dataCreateRoom);
+            console.log(newGame);
+            const response = JSON.stringify({
+                type: "create_room",
+                data: JSON.stringify(newGame),
+                ws,
+              // ws,
+              });
+              console.log('response', response);
+            ws.send(response);
 
-        }
+        } else if (dataType === "single_play") {
+            const dataCreateRoom = JSON.parse(data);
+            console.log('singel play', dataCreateRoom);
+            console.log('new game', newGame);
+        // newGame = new Game(newPlayer)
+        // // connections.add(dataCreateRoom);
+        // const response = JSON.stringify({
+        //     type: "create_room",
+        //     data: JSON.stringify(newGame),
+        //     id: 0,
+            
+        //   });
+        // ws.send(response);
+
+    }
     }
 
 }
