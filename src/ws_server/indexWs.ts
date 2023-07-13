@@ -1,79 +1,78 @@
-// import * as fs from 'fs';
-// import * as path from 'path';
-// import { httpServer } from '../http_server/index.js';
-// import { WebSocketServer } from 'ws';
-// import { env } from 'process';
 import { Player } from "./player.js";
 import { Game } from "./game.js";
-import { IRequest } from "../type.js";
+import { IRequests } from "../type.js";
+import { Room } from "./room.js";
+import { sendResponse } from "../utils.js";
 
-const connections = new Set();
+const players = new Set<Player>();
+let newRoom = new Room(players);
+let newGame: Game;
 
-export const connectWs = (ws: any) => {
+setInterval(() => {
+    newRoom.updateRooms();
+}, 500);
+
+export const connectWs = (ws: WebSocket) => {
     let newPlayer: Player;
-    let players: Player[];
-    let newGame: Game;
 
-    ws.onmessage = (message: { data: string }) => {
-        const { data } = message;
-        const request = JSON.parse(data) as IRequest;
-        const dataType = request.type;
-        console.log(0, dataType);
+    ws.onmessage = (message: any) => {
+        console.log(message.data);
+        const request = JSON.parse(message.data) as IRequests;
+        const type = request.type;
 
+        if (type === 'reg') {
+            const requestFromReg = JSON.parse(request.data);
+            newPlayer = new Player(
+                requestFromReg.name,
+                requestFromReg.password,
+                ws
+            );
+            players.add(newPlayer);
+            sendResponse('reg', JSON.stringify(newPlayer.getPlayer()), ws);
 
-        if (dataType === "reg") {
-            const dataReg = JSON.parse(data)
-            newPlayer = new Player(dataReg.name, dataReg.password)
-            connections.add(dataReg);
-            players.push(newPlayer)
-            const response = JSON.stringify({
-                type: "reg",
-                data: JSON.stringify(newPlayer.getPlayer()),
-                id: 0,
-              });
-            ws.send(response);
-        } else if (dataType === "create_room") {
-            // console.log('create room');
-            // const dataCreateRoom = JSON.parse(data)
-            newGame = new Game(newPlayer)
-            // connections.add(dataCreateRoom);
-            console.log(newGame);
-            const response = JSON.stringify({
-                type: "create_room",
-                data: JSON.stringify(newGame),
-                ws,
-              // ws,
-              });
-              console.log('response', response);
-            ws.send(response);
+            if (newRoom.rooms.length) {
+                sendResponse('update_room', JSON.stringify(newRoom.rooms), ws);
+            }
+        }
+        else if (type === 'create_room') {
+            newGame = new Game(newPlayer);
+            sendResponse('create_game', JSON.stringify(newGame), ws);
+        }
 
-        } else if (dataType === "single_play") {
-            const dataCreateRoom = JSON.parse(data);
-            console.log('singel play', dataCreateRoom);
-            console.log('new game', newGame);
-        // newGame = new Game(newPlayer)
-        // // connections.add(dataCreateRoom);
-        // const response = JSON.stringify({
-        //     type: "create_room",
-        //     data: JSON.stringify(newGame),
-        //     id: 0,
-            
-        //   });
-        // ws.send(response);
+        else if (type === 'add_ships') {
+            const requestData2 = JSON.parse(request.data);
+            newPlayer.ships = requestData2.ships;
 
-    }
-    }
+            const currentRoom = newRoom.rooms.find(
+                (r) => r.roomId === requestData2.gameId
+            );
+            if (currentRoom) {
+                currentRoom.roomUsers.push({
+                    name: newPlayer.name,
+                    index: newPlayer.id,
+                })
+            } else {
+                newRoom.rooms.push({
+                    roomId: newGame.idGame,
+                    roomUsers: [
+                        {
+                            name: newPlayer.name,
+                            index: newPlayer.id,
+                        },
+                    ],
+                });
+            }
+        }
+        else if (type === 'add_user_to_room') {
+            const requestData = JSON.parse(request.data);
+            newGame = new Game(newPlayer);
+            const dataCreateGame = JSON.stringify({
+                idGame: requestData.indexRoom,
+                idPlayer: newPlayer.id,
+            });
+            sendResponse('create_game', dataCreateGame, ws);
+            sendResponse('update_room', JSON.stringify(newRoom.rooms), ws);
+        }
+    };
 
 }
-
-// const port = Number(env.HTTP_PORT || 8181);
-
-// const ws = new WebSocketServer({ port:8181 });
-
-// ws.on('connection', (ws) => {
-// //   ws.on('message', function message(data) {
-//     console.log('received: %s');
-// //   });
-
-//   ws.send('something');
-// });
