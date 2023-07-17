@@ -1,8 +1,8 @@
-import { Player } from "./player.js";
-import { Game } from "./game.js";
-import { IRequests } from "../type.js";
-import { Room } from "./room.js";
-import { sendResponse } from "../utils.js";
+import { Player } from "../modules/player.js";
+import { Game } from "../modules/game.js";
+import { IRequests } from "../modules/interfaces.js";
+import { Room } from "../modules/room.js";
+import { sendResponse } from "../modules/utils.js";
 
 const players = new Set<Player>();
 let newRoom = new Room(players);
@@ -72,7 +72,6 @@ export const connectWs = (ws: WebSocket) => {
             });
             sendResponse('create_game', dataCreateGame, ws);
             sendResponse('update_room', JSON.stringify(newRoom.rooms), ws);
+          }
         }
-    };
-
 }

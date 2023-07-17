@@ -1,9 +1,9 @@
 
-import { IRooms } from "../type.js";
+import { IRooms } from "./interfaces.js";
 import { Player } from "./player.js";
 
 // import { startGame } from "./typesRequest";
-import { sendResponse } from "../utils.js";
+import { sendResponse } from "./utils.js";
 
 export class Room {
   rooms: IRooms[] = [];
